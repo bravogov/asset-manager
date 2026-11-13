@@ -1,0 +1,9 @@
+FROM 127.0.0.1:5001/govuk/asset-manager@sha256:1c053dd2958d4de7474d41a69d8b8c2fe6fbe77bc85b5c1cb021ece84cbff549
+USER root
+COPY --chown=app:app app/controllers/application_controller.rb /app/app/controllers/application_controller.rb
+COPY --chown=app:app app/controllers/media_controller.rb /app/app/controllers/media_controller.rb
+COPY --chown=app:app app/controllers/assets_controller.rb /app/app/controllers/assets_controller.rb
+USER app
+LABEL org.opencontainers.image.title="GOV.UH original native Asset Manager draft authorisation candidate" \
+      org.opencontainers.image.description="Production mock SSO fail-closed for drafts and asset administration; E01 release only" \
+      org.opencontainers.image.source="DOCS-HTML-PDF-PIPELINE / GOVUH-DOCUMENT-PRODUCTION"

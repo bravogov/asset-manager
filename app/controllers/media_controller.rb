@@ -5,6 +5,18 @@ class MediaController < ApplicationController
   before_action :set_token_payload
 
   def download
+    # The internal hostname may be reachable from outside the publishing
+    # network. A mock production Signon session cannot authorise a draft.
+    # Preserve the legitimate redirect from an old draft to its now-live
+    # replacement; do not reveal an unissued version or its metadata.
+    if asset.draft?
+      set_draft_cache_policy
+      if production_sso_untrusted? && (asset.replacement.nil? || asset.replacement.draft?)
+        error_403
+        return
+      end
+    end
+
     if asset.replacement.present? && (!asset.replacement.draft? || requested_from_draft_assets_host?)
       set_default_expiry
       redirect_to_replacement_for(asset)
@@ -41,7 +53,9 @@ class MediaController < ApplicationController
       return
     end
 
-    if requested_from_draft_assets_host? || requested_from_internal_host?
+    if asset.draft?
+      set_draft_cache_policy
+    elsif requested_from_draft_assets_host? || requested_from_internal_host?
       expires_now
     else
       set_default_expiry
@@ -58,6 +72,11 @@ class MediaController < ApplicationController
   end
 
 protected
+
+  def set_draft_cache_policy
+    headers["Cache-Control"] = "private, no-store"
+    headers["Vary"] = "Cookie, Authorization"
+  end
 
   def has_bypass_id_for_asset?(asset)
     return false if @token_payload.nil?
