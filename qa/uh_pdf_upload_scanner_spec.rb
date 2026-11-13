@@ -41,7 +41,7 @@ RSpec.describe "UH original PDF upload and scanner delivery", :disable_cloud_sto
   end
 
   it "rejects the harmless EICAR test file without releasing it into storage" do
-    signature = "X5O!P%@AP[4" + 92.chr + "PZX54(P^)7CC)7}" + "$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+    signature = "X5O!P%@AP[4#{92.chr}PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
     expect(signature.bytesize).to eq(68)
 
     Tempfile.create(["uh-antivirus-fixture-", ".txt"]) do |file|
