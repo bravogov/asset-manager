@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require "rails_helper"
-require Rails.root.join("scripts/uh_production_auth_preflight")
+require "spec_helper"
+require_relative "../../scripts/uh_production_auth_preflight"
 
 RSpec.describe UHProductionAuthenticationPreflight do
   let(:ready) do
