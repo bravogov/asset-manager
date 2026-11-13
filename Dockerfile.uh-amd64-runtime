@@ -36,4 +36,5 @@ RUN groupadd -g 1001 app && useradd -m -u 1001 -g app app \
     && mkdir -p /var/lib/clamav /var/lib/asset-manager/uploads \
     && chown -R app:app /app /var/lib/clamav /var/lib/asset-manager
 USER app
+ENTRYPOINT ["/bin/sh", "/app/scripts/uh_runtime_entrypoint.sh"]
 CMD ["bundle", "exec", "puma"]
