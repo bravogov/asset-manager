@@ -1,0 +1,39 @@
+# Native Asset Manager release candidate for the existing UH linux/amd64 VPS.
+# Original application, original Git history and original ClamAV scanner.
+# No third-party substitute and no installation into a different institution.
+ARG RUBY_IMAGE=ruby:4.0.9-bookworm@sha256:862aacfe5415f2dcb399677d9139963ef4cd989140096cf723a91256ae8a9de3
+
+FROM ${RUBY_IMAGE} AS app_builder
+ENV BUNDLE_JOBS=3 BUNDLE_RETRY=2
+WORKDIR /app
+COPY Gemfile Gemfile.lock .ruby-version ./
+RUN bundle install
+COPY . .
+
+FROM ${RUBY_IMAGE} AS runtime
+ARG CLAMAV_VERSION=1.5.4
+ARG CLAMAV_SHA256=28d6efc5b4423e7830c3559339552eb53870a9eac51ac4efb37d60530d329886
+ENV RAILS_ENV=production GOVUK_APP_NAME=asset-manager
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl libbz2-1.0 libcurl4 libjson-c5 libxml2 \
+    libpcre2-8-0 libssl3 libmspack0 zlib1g shared-mime-info netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+RUN set -eu; \
+    url="https://github.com/Cisco-Talos/clamav/releases/download/clamav-${CLAMAV_VERSION}/clamav-${CLAMAV_VERSION}.linux.x86_64.deb"; \
+    curl -fsSL --retry 3 "$url" -o /tmp/clamav.deb; \
+    printf '%s  %s\n' "$CLAMAV_SHA256" /tmp/clamav.deb | sha256sum -c -; \
+    dpkg -i /tmp/clamav.deb; \
+    rm /tmp/clamav.deb; \
+    rm -rf /usr/local/lib/libclamav_rust.a /usr/local/include /usr/local/share/doc/ClamAV; \
+    ldconfig; \
+    printf 'DatabaseDirectory /var/lib/clamav\nDatabaseMirror database.clamav.net\nDatabaseOwner app\nLogTime yes\n' > /usr/local/etc/freshclam.conf; \
+    clamscan --version; \
+    freshclam --version
+WORKDIR /app
+COPY --from=app_builder /usr/local/bundle /usr/local/bundle
+COPY --from=app_builder /app /app
+RUN groupadd -g 1001 app && useradd -m -u 1001 -g app app \
+    && mkdir -p /var/lib/clamav /var/lib/asset-manager/uploads \
+    && chown -R app:app /app /var/lib/clamav /var/lib/asset-manager
+USER app
+CMD ["bundle", "exec", "puma"]
