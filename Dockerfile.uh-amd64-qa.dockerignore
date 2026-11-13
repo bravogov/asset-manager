@@ -1,0 +1,11 @@
+.git
+.gitignore
+.dockerignore
+Dockerfile
+Procfile
+README.md
+coverage
+docs
+log
+tmp
+vendor
