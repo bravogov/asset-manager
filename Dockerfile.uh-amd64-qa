@@ -1,0 +1,13 @@
+# Candidate-only AMD64 Rails test image for the original native Asset Manager.
+# Production packages and ClamAV require a separately accepted immutable release.
+FROM ruby:4.0.9-bookworm@sha256:862aacfe5415f2dcb399677d9139963ef4cd989140096cf723a91256ae8a9de3
+ENV BUNDLE_JOBS=3 BUNDLE_RETRY=2 RAILS_ENV=test
+WORKDIR /app
+COPY Gemfile Gemfile.lock .ruby-version ./
+RUN bundle install
+COPY . .
+RUN ruby -c app/controllers/application_controller.rb && \
+    ruby -c app/controllers/assets_controller.rb && \
+    ruby -c app/controllers/media_controller.rb && \
+    ruby -c scripts/uh_draft_asset_guard_smoke.rb
+CMD ["bundle", "exec", "rspec"]
