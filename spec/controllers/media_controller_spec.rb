@@ -319,10 +319,10 @@ RSpec.describe MediaController, type: :controller do
           get :download, **params
         end
 
-        it "sets Cache-Control header to no-cache" do
+        it "marks draft responses private and non-cacheable" do
           get :download, **params
 
-          expect(response.headers["Cache-Control"]).to eq("no-cache")
+          expect(response.headers["Cache-Control"]).to eq("private, no-store")
         end
       end
 
@@ -339,10 +339,10 @@ RSpec.describe MediaController, type: :controller do
           get :download, **params
         end
 
-        it "sets Cache-Control header to no-cache" do
+        it "marks draft responses private and non-cacheable" do
           get :download, **params
 
-          expect(response.headers["Cache-Control"]).to eq("no-cache")
+          expect(response.headers["Cache-Control"]).to eq("private, no-store")
         end
       end
 
