@@ -1,0 +1,32 @@
+name: UH AMD64 release-image packaging checks
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-release-image:
+    name: Ruby 4.0.9 / ClamAV 1.5.4 AMD64 candidate
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout authoritative BravoGov source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build original application with checked AMD64 ClamAV
+        run: |
+          docker build --pull --platform linux/amd64 \
+            -f Dockerfile.uh-amd64-runtime \
+            -t asset-manager-uh-release-candidate \
+            --label org.opencontainers.image.revision="${GITHUB_SHA}" .
+      - name: Verify original runtime and virus scanner
+        run: |
+          docker run --rm --network none --entrypoint sh \
+            asset-manager-uh-release-candidate \
+            -lc 'ruby -v && bundle check && clamscan --version && freshclam --version'
+      - name: Report candidate image digest (not production release)
+        run: |
+          docker image inspect asset-manager-uh-release-candidate \
+            --format 'Candidate image ID: {{.Id}} | architecture: {{.Architecture}}'

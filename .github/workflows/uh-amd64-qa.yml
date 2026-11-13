@@ -1,0 +1,42 @@
+name: UH Asset Manager AMD64 candidate tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-test:
+    name: Ruby 4.0.9 and native Asset Manager suite (AMD64)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    steps:
+      - name: Checkout BravoGov source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build isolated AMD64 QA image
+        run: |
+          docker build --pull --platform linux/amd64 -f Dockerfile.uh-amd64-qa -t uh-asset-manager-qa .
+      - name: Run native RSpec with temporary fake storage
+        run: |
+          docker run --rm --network host --memory 2500m --cpus 2 \
+            --cap-drop ALL --security-opt no-new-privileges \
+            -e RAILS_ENV=test -e GOVUK_ENVIRONMENT=test -e GOVUK_APP_NAME=asset-manager \
+            -e GOVUK_APP_DOMAIN=publishing.service.gov.uhrblx.com \
+            -e TEST_MONGODB_URI=mongodb://127.0.0.1:27017/govuk_assets_qa \
+            -e MONGODB_URI=mongodb://127.0.0.1:27017/govuk_assets_qa \
+            -e REDIS_URL=redis://127.0.0.1:6379/0 \
+            -e SECRET_KEY_BASE=ci-test-only-not-a-production-secret \
+            -e JWT_AUTH_SECRET=ci-test-only-not-a-production-token \
+            -e GDS_SSO_STRATEGY=mock \
+            uh-asset-manager-qa bundle exec rspec --format progress
