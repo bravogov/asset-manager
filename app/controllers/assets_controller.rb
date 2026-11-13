@@ -1,6 +1,7 @@
 class AssetsController < ApplicationController
   MAX_FILE_SIZE = Rails.configuration.max_file_size
 
+  prepend_before_action :deny_admin_when_production_sso_untrusted
   before_action :restrict_request_format
   before_action :check_request_size, only: %i[create update]
 
@@ -56,6 +57,13 @@ class AssetsController < ApplicationController
   end
 
 private
+
+  def deny_admin_when_production_sso_untrusted
+    return unless production_sso_untrusted?
+
+    headers["Cache-Control"] = "private, no-store"
+    error_403
+  end
 
   def restrict_request_format
     request.format = :json

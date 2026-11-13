@@ -11,6 +11,14 @@ class ApplicationController < ActionController::Base
   rescue_from MediaErrors::AssetNotFound, with: :error_404
   rescue_from MediaErrors::AssetDeleted, with: :error_410
 
+protected
+
+  # A production mock SSO session is not evidence of an authenticated editor.
+  # Assets and their metadata must fail closed until real Signon is configured.
+  def production_sso_untrusted?
+    Rails.env.production? && ENV["GDS_SSO_STRATEGY"] != "real"
+  end
+
 private
 
   def error_403
