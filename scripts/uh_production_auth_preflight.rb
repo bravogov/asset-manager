@@ -6,9 +6,7 @@ require "uri"
 # An environment that passes these checks still requires a real authenticated
 # editor-to-Asset-Manager upload, denial, scan, retrieval and rollback test.
 module UHProductionAuthenticationPreflight
-  module_function
-
-  def errors(env)
+  def self.errors(env)
     return [] unless env.fetch("RAILS_ENV", "development") == "production"
 
     failures = []
@@ -37,9 +35,8 @@ end
 if $PROGRAM_NAME == __FILE__
   problems = UHProductionAuthenticationPreflight.errors(ENV)
   if problems.empty?
-    puts "Asset Manager authentication configuration present; live Signon and upload tests still required"
+    warn "Asset Manager authentication configuration present; live Signon and upload tests still required"
   else
-    warn "Asset Manager is not ready for production: #{problems.join('; ')}"
-    exit 1
+    raise "Asset Manager is not ready for production: #{problems.join('; ')}"
   end
 end
