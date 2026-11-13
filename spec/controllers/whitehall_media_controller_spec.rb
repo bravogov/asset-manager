@@ -119,11 +119,11 @@ RSpec.describe WhitehallMediaController, type: :controller do
           get :download, params: { path:, format: }
         end
 
-        it "sets Cache-Control header to no-cache" do
+        it "marks draft responses private and non-cacheable" do
           login_as_stub_user
           get :download, params: { path:, format: }
 
-          expect(response.headers["Cache-Control"]).to eq("no-cache")
+          expect(response.headers["Cache-Control"]).to eq("private, no-store")
         end
       end
     end
